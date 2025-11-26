@@ -174,20 +174,29 @@ class _HomeScreenState extends State<HomeScreen> {
 
               // --- Mini games / Rewards ---
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _featureCard(
-                    Icons.videogame_asset_outlined,
-                    "Mini Game",
-                    "Quizz môi trường",
-                  ),
-                  _featureCard(
-                    Icons.card_giftcard_outlined,
-                    "Đổi thưởng",
-                    "Coupon & Ưu đãi",
-                  ),
-                ],
-              ),
+  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  children: [
+    // Mini game (tạm thời chưa gắn gì)
+    _featureCard(
+      Icons.videogame_asset_outlined,
+      "Mini Game",
+      "Quizz môi trường",
+    ),
+
+    // Đổi thưởng -> chuyển sang màn voucher
+    GestureDetector(
+      onTap: () {
+        Navigator.pushNamed(context, '/voucher'); // 👈 trỏ đúng route bạn đã khai báo
+      },
+      child: _featureCard(
+        Icons.card_giftcard_outlined,
+        "Đổi thưởng",
+        "Coupon & Ưu đãi",
+      ),
+    ),
+  ],
+),
+
 
               const SizedBox(height: 4),
 

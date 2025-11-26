@@ -1,16 +1,21 @@
 import 'dart:convert';
+import 'package:frontend_ecotrack/data/models/reward_item.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+
+
 class ApiClient {
-  final String baseUrl = 'http://192.168.1.89:8080';
+  /// Địa chỉ BE – sửa IP này đúng với máy chạy Spring Boot
+  final String baseUrl = 'http://192.168.1.13:8080';
+
+  /// Dùng chung storage để lưu token
   final FlutterSecureStorage storage;
 
   ApiClient({required this.storage});
 
   Future<Map<String, String>> _headers({
     bool json = true,
-    bool includeJson = true,
   }) async {
     final token = await storage.read(key: 'jwt_token');
 
@@ -65,7 +70,8 @@ class ApiClient {
   ) async {
     final token = await storage.read(key: 'jwt_token');
 
-    var request = http.MultipartRequest("POST", Uri.parse('$baseUrl$path'));
+    final uri = Uri.parse('$baseUrl$path');
+    final request = http.MultipartRequest("POST", uri);
 
     if (token != null) {
       request.headers['Authorization'] = 'Bearer $token';
@@ -84,5 +90,52 @@ class ApiClient {
 
   dynamic decodeUtf8Json(http.Response response) {
     return jsonDecode(utf8.decode(response.bodyBytes));
+  }
+}
+
+/// ======================
+/// VoucherApi dùng ApiClient
+/// ======================
+class VoucherApi {
+  final ApiClient _client;
+
+  VoucherApi(this._client);
+
+  /// Lấy danh sách voucher từ BE
+  Future<List<RewardItem>> fetchRewards() async {
+    final res = await _client.get('/api/v1/vouchers');
+
+    if (res.statusCode == 200) {
+      final List data = _client.decodeUtf8Json(res);
+      return data.map((e) => RewardItem.fromJson(e)).toList();
+    } else {
+      throw Exception('Failed to load vouchers: ${res.body}');
+    }
+  }
+
+  /// Gọi API đổi voucher
+  Future<void> redeemVoucher(int voucherId, int userId) async {
+    final res = await _client.post(
+      '/api/v1/vouchers/$voucherId/redeem?userId=$userId',
+      {}, // body rỗng
+    );
+
+    if (res.statusCode != 200) {
+      throw Exception('Redeem failed: ${res.body}');
+    }
+  }
+
+  /// Lấy điểm user cho màn voucher
+  Future<int> fetchUserPoints(int userId) async {
+    final res = await _client.get(
+      '/api/v1/vouchers/user/$userId/voucher-page',
+    );
+
+    if (res.statusCode == 200) {
+      final Map<String, dynamic> data = _client.decodeUtf8Json(res);
+      return (data['points'] ?? 0) as int;
+    } else {
+      throw Exception('Failed to load user points: ${res.body}');
+    }
   }
 }

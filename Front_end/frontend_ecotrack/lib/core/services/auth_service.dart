@@ -1,69 +1,72 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:frontend_ecotrack/core/services/api_client.dart';
 
 class AuthService {
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
-  final String baseUrl = 'http://192.168.1.89:8080';
+  final ApiClient _client;
+
+  /// Constructor mới:
+  /// - Nếu bạn truyền vào client: AuthService(client: myClient)
+  /// - Nếu không truyền: AuthService()  -> tự tạo ApiClient + FlutterSecureStorage
+  AuthService({ApiClient? client})
+      : _client = client ?? ApiClient(storage: const FlutterSecureStorage());
 
   // Đăng nhập
   Future<bool> login(String email, String password) async {
-    final url = Uri.parse('$baseUrl/api/auth/login');
-
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email, 'password': password}),
+    final res = await _client.post(
+      '/api/auth/login',
+      {
+        'email': email,
+        'password': password,
+      },
     );
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
+    if (res.statusCode == 200) {
+      final data = _client.decodeUtf8Json(res);
       final token = data['token'];
+
       if (token != null) {
-        await _storage.write(key: 'jwt_token', value: token);
+        await _client.storage.write(key: 'jwt_token', value: token);
         return true;
       }
     }
-    print('Login failed: ${response.statusCode}');
+
+    print('Login failed: ${res.statusCode} - ${res.body}');
     return false;
   }
 
   // Đăng ký
   Future<bool> register(String email, String password) async {
-    final url = Uri.parse('$baseUrl/api/auth/register');
-
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
+    final res = await _client.post(
+      '/api/auth/register',
+      {
         'email': email,
         'username': email,
         'password': password,
-      }),
+      },
     );
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
+    if (res.statusCode == 200) {
+      final data = _client.decodeUtf8Json(res);
       final token = data['token'];
 
       if (token != null) {
-        await _storage.write(key: 'jwt_token', value: token);
+        await _client.storage.write(key: 'jwt_token', value: token);
         print('Register successful, token saved.');
         return true;
       }
     }
 
-    print('Register failed: ${response.statusCode}');
+    print('Register failed: ${res.statusCode} - ${res.body}');
     return false;
   }
 
-  //  Đăng xuất
+  // Đăng xuất
   Future<void> logout() async {
-    await _storage.delete(key: 'jwt_token');
+    await _client.storage.delete(key: 'jwt_token');
   }
 
   // Lấy token hiện tại
   Future<String?> getToken() async {
-    return await _storage.read(key: 'jwt_token');
+    return await _client.storage.read(key: 'jwt_token');
   }
 }

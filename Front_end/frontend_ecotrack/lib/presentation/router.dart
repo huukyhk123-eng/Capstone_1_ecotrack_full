@@ -4,6 +4,7 @@ import 'package:frontend_ecotrack/presentation/user_app/Home/Home_screen.dart';
 import 'package:frontend_ecotrack/presentation/user_app/Report/Report_page.dart';
 import 'package:frontend_ecotrack/presentation/user_app/profile/ProfileScreen.dart';
 import 'package:frontend_ecotrack/presentation/user_app/switch_tabs/UserLayout.dart';
+import 'package:frontend_ecotrack/presentation/user_app/voucher/rewards_screen.dart';
 
 import 'auth/register_screen.dart';
 
@@ -24,6 +25,8 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const ProfileScreen());
       case '/user_app':
         return MaterialPageRoute(builder: (_) => Userlayout());
+      case '/voucher':
+        return MaterialPageRoute(builder: (_) => const RewardsScreen());
       default:
         return MaterialPageRoute(
           builder: (_) =>
