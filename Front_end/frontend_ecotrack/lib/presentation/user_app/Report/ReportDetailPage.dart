@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart'; // [MỚI]
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:frontend_ecotrack/data/models/report_model.dart';
 import 'package:intl/intl.dart';
 
@@ -8,7 +8,6 @@ class ReportDetailPage extends StatelessWidget {
 
   const ReportDetailPage({super.key, required this.report});
 
-  // [MỚI] Hàm xử lý URL ảnh
   String _buildImageUrl(String? path) {
     if (path == null || path.isEmpty) return "";
     if (path.startsWith("http")) return path;
@@ -34,12 +33,9 @@ class ReportDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // [MỚI] Gọi hàm xử lý URL
-    String displayImageUrl = _buildImageUrl(report.imageUrl);
+    final String displayImageUrl = _buildImageUrl(report.imageUrl);
 
     return Scaffold(
-      // Scaffold tự động có nút Back trên AppBar nếu dùng Navigator.push
-      // Nhưng ta có thể custom lại nếu muốn
       backgroundColor: Colors.white,
       body: CustomScrollView(
         slivers: [
@@ -63,20 +59,17 @@ class ReportDetailPage extends StatelessWidget {
                 ),
               ),
             ),
-            // Nút back mặc định sẽ hiện ở đây, màu trắng
             leading: IconButton(
               icon: const Icon(Icons.arrow_back, color: Colors.white),
               onPressed: () => Navigator.pop(context),
             ),
           ),
-
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Badge trạng thái
                   Row(
                     children: [
                       Container(
@@ -104,7 +97,6 @@ class ReportDetailPage extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 16),
-
                   Text(
                     report.title,
                     style: const TextStyle(
@@ -113,7 +105,6 @@ class ReportDetailPage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-
                   Row(
                     children: [
                       const Icon(
@@ -123,37 +114,31 @@ class ReportDetailPage extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        "Loại: ${report.category}",
+                        "Loai: ${report.category}",
                         style: const TextStyle(fontSize: 16),
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
-
                   const Divider(),
-
                   const Text(
-                    "Mô tả chi tiết",
+                    "Mo ta chi tiet",
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    report.description.isEmpty
-                        ? "Không có mô tả."
-                        : report.description,
+                    report.description.isEmpty ? "Khong co mo ta." : report.description,
                     style: const TextStyle(
                       fontSize: 16,
                       height: 1.5,
                       color: Colors.black87,
                     ),
                   ),
-
                   const SizedBox(height: 20),
                   const Divider(),
-
                   if (report.aiVerified != null) ...[
                     const Text(
-                      "Kết quả phân tích AI",
+                      "Ket qua phan tich AI",
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -173,22 +158,23 @@ class ReportDetailPage extends StatelessWidget {
                       child: Column(
                         children: [
                           _buildAIRow(
-                            "Xác nhận rác thải:",
-                            report.aiVerified! ? "Đúng" : "Không phải rác",
+                            "Xac nhan rac thai:",
+                            report.aiVerified! ? "Dung" : "Khong phai rac",
                           ),
                           const SizedBox(height: 8),
                           _buildAIRow(
-                            "Độ tin cậy:",
-                            "${(report.aiConfidence! * 100).toStringAsFixed(1)}%",
+                            "Do tin cay:",
+                            report.aiConfidence == null
+                                ? "Khong co du lieu"
+                                : "${(report.aiConfidence! * 100).toStringAsFixed(1)}%",
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 20),
                   ],
-
                   const Text(
-                    "Vị trí",
+                    "Vi tri",
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),

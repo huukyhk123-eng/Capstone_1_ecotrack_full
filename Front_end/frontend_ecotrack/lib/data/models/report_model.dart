@@ -10,7 +10,7 @@ class Report {
   final String category;
   final bool? aiVerified;
   final double? aiConfidence;
-  final String? aiAnalysisJson; // JSON string chứa chi tiết loại rác
+  final String? aiAnalysisJson;
 
   Report({
     required this.reportId,
@@ -28,21 +28,30 @@ class Report {
   });
 
   factory Report.fromJson(Map<String, dynamic> json) {
+    final parsedAiConfidence = _tryParseDouble(json['aiConfidence']);
+
     return Report(
       reportId: json['reportId'] ?? 0,
-      title: json['title'] ?? 'Không có tiêu đề',
+      title: json['title'] ?? 'Khong co tieu de',
       description: json['description'] ?? '',
       imageUrl: json['imageUrl'] ?? '',
-      latitude: (json['gpsLat'] ?? 0.0).toDouble(), // Sửa theo tên cột DB Spring Boot
-      longitude: (json['gpsLong'] ?? 0.0).toDouble(),
+      latitude: _tryParseDouble(json['gpsLat']) ?? 0.0,
+      longitude: _tryParseDouble(json['gpsLong']) ?? 0.0,
       status: json['status'] ?? 'UNKNOWN',
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : DateTime.now(),
-      category: json['category'] ?? 'Khác',
+      category: json['category'] ?? 'Khac',
       aiVerified: json['aiVerified'],
-      aiConfidence: (json['aiConfidence'] ?? 0.0).toDouble(),
+      aiConfidence: parsedAiConfidence,
       aiAnalysisJson: json['aiAnalysisJson'],
     );
+  }
+
+  static double? _tryParseDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value);
+    return null;
   }
 }

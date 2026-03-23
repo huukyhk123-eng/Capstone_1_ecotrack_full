@@ -5,8 +5,14 @@ import capstone_1.Ecotrack_backend.model.WasteReport;
 import capstone_1.Ecotrack_backend.service.WasteReportService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -40,11 +46,15 @@ public class WasteReportController {
             @RequestParam("status") String status,
             @RequestParam(value = "image", required = false) MultipartFile image) {
         try {
-            Long userId = (Long) request.getAttribute("userId");
-            if (userId == null) {
-                userId = 1L; // Hardcode để test nếu cần
+            Object userIdObj = request.getAttribute("userId");
+            if (userIdObj == null) {
+                throw new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED,
+                        "Khong tim thay thong tin nguoi dung. Vui long dang nhap."
+                );
             }
 
+            Long userId = Long.valueOf(userIdObj.toString());
             String imageUrl = null;
             if (image != null && !image.isEmpty()) {
                 imageUrl = cloudinaryService.uploadImage(image, "ecotrack/reports");
@@ -67,29 +77,25 @@ public class WasteReportController {
             response.put("success", saved.getStatus() == WasteReport.Status.VERIFIED);
             response.put("status", saved.getStatus().name());
             response.put("points", saved.getStatus() == WasteReport.Status.VERIFIED ? 10 : 0);
-            response.put("message",
+            response.put(
+                    "message",
                     saved.getStatus() == WasteReport.Status.VERIFIED
-                            ? "Báo cáo của bạn đã được AI xác thực thành công."
+                            ? "Bao cao cua ban da duoc AI xac thuc thanh cong."
                             : saved.getStatus() == WasteReport.Status.REJECTED
-                                    ? "AI không phát hiện rác hoặc ảnh không rõ."
-                                    : "Báo cáo đang chờ kiểm duyệt.");
-
+                            ? "AI khong phat hien rac hoac anh khong ro."
+                            : "Bao cao dang cho kiem duyet."
+            );
             response.put("time", saved.getCreatedAt());
             response.put("transactionCode", "TXN-" + saved.getReportId());
 
             return ResponseEntity.ok(response);
-
+        } catch (ResponseStatusException ex) {
+            return buildErrorResponse(ex.getStatusCode(), ex.getReason());
         } catch (RuntimeException ex) {
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", ex.getMessage()); // Lấy "Vui lòng chờ thêm X phút..."
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+            return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
         } catch (Exception ex) {
             ex.printStackTrace();
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "Lỗi hệ thống: " + ex.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+            return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Loi he thong: " + ex.getMessage());
         }
     }
 
@@ -97,12 +103,21 @@ public class WasteReportController {
     public ResponseEntity<List<WasteReport>> getMyReports(HttpServletRequest request) {
         Object userIdObj = request.getAttribute("userId");
         if (userIdObj == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
-                    "Không tìm thấy thông tin người dùng. Vui lòng đăng nhập.");
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "Khong tim thay thong tin nguoi dung. Vui long dang nhap."
+            );
         }
 
         Long userId = Long.valueOf(userIdObj.toString());
         List<WasteReport> reports = reportService.getReportsByUser(userId);
         return ResponseEntity.ok(reports);
+    }
+
+    private ResponseEntity<Map<String, Object>> buildErrorResponse(HttpStatusCode status, String message) {
+        Map<String, Object> errorResponse = new HashMap<>();
+        errorResponse.put("success", false);
+        errorResponse.put("message", message);
+        return ResponseEntity.status(status).body(errorResponse);
     }
 }
